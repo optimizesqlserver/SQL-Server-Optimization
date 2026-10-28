@@ -11541,7 +11541,7 @@ BEGIN
         BEGIN TRY
             EXEC optimize.sp_LoadDataFromServer
                 @ServerName        = @@SERVERNAME,
-                @DatabaseMode      = @Databases,
+                @Databases         = @Databases,
                 @MinIndexAdvantage = 2500.0,
                 @MinAvgUserImpact  = 99.0;
 
@@ -12188,6 +12188,15 @@ BEGIN
             ---------------------------------------------------------------
             IF @RunUnusedIndex = 1 AND OBJECT_ID('optimize.UnusedIndexResults', 'U') IS NOT NULL
             BEGIN
+                -- Auto-resolve unused index findings already handled by another tool (e.g. Duplicate Index DROP/COMBINE)
+                UPDATE u SET ResolvedDate = GETDATE()
+                FROM optimize.UnusedIndexResults u
+                INNER JOIN #ModifiedIndexes mi
+                    ON mi.DatabaseName = u.DatabaseName AND mi.SchemaName = u.SchemaName
+                   AND mi.TableName = u.TableName AND mi.IndexName = u.IndexName
+                WHERE u.ResolvedDate IS NULL
+                  AND u.DatabaseName = @cDB AND u.SchemaName = @cSchema AND u.TableName = @cTable;
+
                 SET @cSection = NULL;
                 SELECT @cSection = ISNULL(@cSection + @CRLF2, '')
                     + '--   Index: ' + IndexName + ' (' + ISNULL(IndexType, 'NONCLUSTERED') + ')' + @CRLF2
