@@ -1,7 +1,24 @@
--- ==========================================================================
--- help-index-usage: sp_helpindexUsage dependency chain
--- Installs to master (procs) and DBA_Utilities (table)
--- ==========================================================================
+/*
+
+SQL Server Optimization Suite - sp_helpindexUsage
+SQL Server 2016, SQL Server 2017, SQL Server 2019, SQL Server 2022
+
+Documentation: https://optimizesqlserver.com/tools-help-index-usage.html
+GitHub: https://github.com/optimizesqlserver/SQL-Server-Optimization
+License: https://optimizesqlserver.com/license.html
+
+Version: 2026-10-23
+
+You can contact me by e-mail at mja1175@yahoo.com.
+
+Mike Armstrong
+https://optimizesqlserver.com
+
+--------------------------------------------------------------------------------
+Installs to master (procs) and DBA_Utilities (table)
+--------------------------------------------------------------------------------
+
+*/
 
 -- Table: dbo.IndexUsageTemp (DBA_Utilities)
 USE DBA_Utilities;
@@ -360,7 +377,8 @@ AS
          ,@filter_definition NVARCHAR(MAX)
          ,@ColsInTree        NVARCHAR(2126)
          ,@ColsInLeaf        NVARCHAR(MAX)
-         ,@ExecStr           NVARCHAR(MAX);
+         ,@ExecStr           NVARCHAR(MAX)
+         ,@memory_optimized  BIT;
 
   -- Check to see that the object names are local to the current database.
   SELECT @dbname = PARSENAME(@objname, 3);
@@ -395,9 +413,11 @@ AS
           ,s.no_recompute
           ,i.filter_definition
           ,i.is_disabled
+          ,ISNULL(t.is_memory_optimized, 0) AS is_memory_optimized
     FROM sys.indexes AS i
          JOIN sys.stats AS s ON i.object_id = s.object_id
                                 AND i.index_id = s.stats_id
+         LEFT JOIN sys.tables AS t ON i.object_id = t.object_id
     WHERE i.object_id = @objid;
   OPEN ms_crs_ind;
   FETCH ms_crs_ind
@@ -413,7 +433,8 @@ AS
       ,@auto_created
       ,@no_recompute
       ,@filter_definition
-      ,@is_disabled;
+      ,@is_disabled
+      ,@memory_optimized;
 
   -- IF NO INDEX, QUIT
   IF @@fetch_status < 0
@@ -442,7 +463,8 @@ AS
    ,inc_Count SMALLINT
    ,inc_columns NVARCHAR(MAX)
    ,cols_in_tree NVARCHAR(2126)
-   ,cols_in_leaf NVARCHAR(MAX));
+   ,cols_in_leaf NVARCHAR(MAX)
+   ,memory_optimized BIT);
 
   CREATE TABLE #IncludedColumns
   ( RowNumber SMALLINT
@@ -611,7 +633,7 @@ AS
       VALUES
       (@indname, @indid, @type, @ignore_dup_key, @is_unique, @is_hypothetical, @is_primary_key, @is_unique_key
       ,@is_disabled, @auto_created, @no_recompute, @groupname, @keys, @filter_definition, @inc_Count, @inc_columns
-      ,@ColsInTree, @ColsInLeaf);
+      ,@ColsInTree, @ColsInLeaf, @memory_optimized);
 
       -- Next index
       FETCH ms_crs_ind
@@ -627,7 +649,8 @@ AS
           ,@auto_created
           ,@no_recompute
           ,@filter_definition
-          ,@is_disabled;
+          ,@is_disabled
+          ,@memory_optimized;
     END;
   DEALLOCATE ms_crs_ind;
 
