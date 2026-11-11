@@ -1,9 +1,26 @@
 /*
-    SQL Server Optimization Suite
-    Default Database: DBA_Utilities
 
-    To install in a different database, find and replace all instances of
-    "DBA_Utilities" with your database name before running this script.
+SQL Server Optimization Suite - Statistics Maintenance
+SQL Server 2016, SQL Server 2017, SQL Server 2019, SQL Server 2022
+
+Documentation: https://optimizesqlserver.com/maint-statistics.html
+GitHub: https://github.com/optimizesqlserver/SQL-Server-Optimization
+License: https://optimizesqlserver.com/license.html
+
+Version: 2026-10-23
+
+You can contact me by e-mail at mja1175@yahoo.com.
+
+Mike Armstrong
+https://optimizesqlserver.com
+
+--------------------------------------------------------------------------------
+Default Database: DBA_Utilities
+
+To install in a different database, find and replace all instances of
+"DBA_Utilities" with your database name before running this script.
+--------------------------------------------------------------------------------
+
 */
 USE DBA_Utilities;
 GO
@@ -54,11 +71,11 @@ GO
 --      - Empty tables (0 rows) are excluded
 --      - Only user tables are included (system tables excluded)
 --
--- Usage: EXEC DBA_Utilities.optimize.sp_StatisticsMaintenance @Databases = 'USER_DATABASES', @Run = 0, @StatisticsSample = NULL, @TableName = NULL, @DetailOutput = 0
+-- Usage: EXEC DBA_Utilities.optimize.sp_StatisticsMaintenance @Databases = 'USER_DATABASES', @Run = 1, @StatisticsSample = NULL, @TableName = NULL, @DetailOutput = 0
 
 CREATE OR ALTER PROCEDURE optimize.sp_StatisticsMaintenance
     @Databases NVARCHAR(MAX) = NULL,      -- NULL = USER_DATABASES. Supports Ola Hallengren-style syntax
-    @Run BIT = 0,                         -- 0 = display only (default), 1 = execute updates
+    @Run BIT = 1,                         -- 1 = execute updates (default), 0 = display only (dry run)
     @StatisticsSample DECIMAL(5,2) = NULL,-- NULL = no WITH clause (default), 100 = WITH FULLSCAN, 1-99.99 = WITH SAMPLE X PERCENT
     @TableName NVARCHAR(MAX) = NULL,      -- NULL = all tables (default), or comma-separated list e.g. 'Orders' or 'dbo.Orders,sales.Invoices'
     @DetailOutput BIT = 0,                -- 0 = minimal output (default - database progress only), 1 = detailed results
